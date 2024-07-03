@@ -1,7 +1,9 @@
 <template>
   <div>
-    <input type="file" @change="onFileChange" />
-    <table v-if="sheetData.length">
+    <a-upload :before-upload="beforeUpload" :show-upload-list="false">
+      <a-button icon="upload">Click to Upload</a-button>
+    </a-upload>
+    <table v-if="sheetData.length" class="excel-table">
       <thead>
         <tr>
           <th v-for="(header, index) in sheetData[0]" :key="index">{{ header }}</th>
@@ -26,39 +28,38 @@ export default {
     };
   },
   methods: {
-    onFileChange(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonSheet = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          this.sheetData = jsonSheet;
-        };
-        reader.readAsArrayBuffer(file);
-      }
+    beforeUpload(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonSheet = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        this.sheetData = jsonSheet;
+      };
+      reader.readAsArrayBuffer(file);
+      // Prevent upload
+      return false;
     },
   },
 };
 </script>
 
 <style scoped>
-table {
+.excel-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
 }
 
-th, td {
+.excel-table th, .excel-table td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: left;
 }
 
-th {
+.excel-table th {
   background-color: #f4f4f4;
 }
 </style>
